@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-chatbot-platform:latest
+    container_name: chatbot_api
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - REDIS_ENABLED=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=chatbot_admin
+      - DB_PASSWORD=secure_password_here
+      - DB_DATABASE=chatbot_db
+      - CRAWLER_USER_AGENT="PrintEZ AI Crawler / 1.0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - chatbot_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: chatbot_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=chatbot_admin
+      - POSTGRES_PASSWORD=secure_password_here
+      - POSTGRES_DB=chatbot_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatbot_admin -d chatbot_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - chatbot_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: chatbot_redis
+    restart: always
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - chatbot_net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  chatbot_net:
+    driver: bridge

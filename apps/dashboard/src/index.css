@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* --- Premium Deep Dark Theme HSL Tokens --- */
+  --bg-primary: hsl(222, 47%, 7%);
+  --bg-secondary: hsl(220, 40%, 11%);
+  --bg-card: hsla(220, 38%, 14%, 0.75);
+  --bg-glass: hsla(220, 35%, 16%, 0.85);
+  --border-glass: hsla(217, 33%, 28%, 0.6);
+  --border-glow: hsla(252, 100%, 75%, 0.4);
+  
+  --text-primary: hsl(0, 0%, 98%);
+  --text-secondary: hsl(215, 20%, 70%);
+  --text-muted: hsl(215, 15%, 50%);
+  
+  --accent-indigo: hsl(245, 82%, 67%);
+  --accent-indigo-hover: hsl(245, 82%, 73%);
+  --accent-indigo-glow: hsla(245, 82%, 67%, 0.3);
+  
+  --accent-emerald: hsl(158, 64%, 52%);
+  --accent-emerald-glow: hsla(158, 64%, 52%, 0.25);
+  
+  --accent-amber: hsl(38, 92%, 58%);
+  --accent-rose: hsl(351, 85%, 62%);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  background-image: 
+    radial-gradient(ellipse at 15% 0%, hsla(245, 82%, 67%, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 90%, hsla(158, 64%, 52%, 0.12) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-indigo);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+  outline: none;
+}

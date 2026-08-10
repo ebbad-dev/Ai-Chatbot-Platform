@@ -1,0 +1,33 @@
+{
+  "name": "@chatbot-platform/widget",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5174",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+  },
+  "dependencies": {
+    "@chatbot-platform/shared-types": "*",
+    "@preact/preset-vite": "^2.10.6",
+    "preact": "^10.29.8",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^20.14.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "jsdom": "^24.1.0",
+    "oxlint": "^0.12.0",
+    "typescript": "~5.8.0",
+    "vite": "^8.1.1",
+    "vitest": "^2.0.0"
+  }
+}
