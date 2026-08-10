@@ -375,6 +375,16 @@ export class OpenCartConnector implements IConnector {
         hasMetadata = true;
       }
     }
+    
+    // Explicitly retain model and sku in metadata since they are often queried directly
+    if (item.model) {
+      metadata.model = item.model as string;
+      hasMetadata = true;
+    }
+    if (item.sku) {
+      metadata.sku = item.sku as string;
+      hasMetadata = true;
+    }
 
     return {
       externalId: String(externalId),

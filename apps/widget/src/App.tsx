@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import type { ChatMessage, ChatbotPublicConfig } from '@chatbot-platform/shared-types';
+import type { ChatMessage, ChatbotPublicConfig, ChatMessageProduct } from '@chatbot-platform/shared-types';
 import './App.css';
 
 type NavTab = 'home' | 'messages' | 'faq';
@@ -197,6 +197,12 @@ export default function App() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
+  // E-commerce Overlays
+  const [activeProductView, setActiveProductView] = useState<ChatMessageProduct | null>(null);
+  const [productQuantity, setProductQuantity] = useState<number>(1);
+  const [checkoutData, setCheckoutData] = useState({ name: '', email: '', address: '' });
+  const [checkoutSubmitted, setCheckoutSubmitted] = useState(false);
+
   // Conversational animation delay
   const [isGeneratingWelcome, setIsGeneratingWelcome] = useState<boolean>(true);
 
@@ -219,6 +225,9 @@ export default function App() {
   const [ticketSubmitted, setTicketSubmitted] = useState<boolean>(false);
   const [csatStatus, setCsatStatus] = useState<{ [msgId: string]: string }>({});
   const [cartCount, setCartCount] = useState<number>(0);
+  const [cartItems, setCartItems] = useState<Array<{ product: ChatMessageProduct, quantity: number }>>([]);
+  const [showCheckout, setShowCheckout] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Conversation Thread History State
   const [pastThreads, setPastThreads] = useState<ThreadSummary[]>(INITIAL_PAST_THREADS);
@@ -403,43 +412,64 @@ export default function App() {
     }
   };
 
-  const handleAddToCart = async (product: ChatMessageProduct) => {
-    if (!product.externalId || !product.url) return;
+  const handleAddToCart = (product: ChatMessageProduct, qty: number = 1) => {
+    if (!product.externalId) return;
     
-    // First, try adding to cart silently using the host store's API
+    setCartItems(prev => {
+      const existing = prev.find(item => item.product.externalId === product.externalId);
+      if (existing) {
+        return prev.map(item => item.product.externalId === product.externalId 
+          ? { ...item, quantity: item.quantity + qty } 
+          : item
+        );
+      }
+      return [...prev, { product, quantity: qty }];
+    });
+    
+    setCartCount(c => c + qty);
+    setActiveProductView(null);
+    
+    // Optional: open checkout automatically or show a toast
+    // setShowCheckout(true);
+  };
+
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCheckoutSubmitted(true);
+    
     try {
-      const formData = new URLSearchParams();
-      formData.append('product_id', String(product.externalId));
-      formData.append('quantity', '1');
-      
-      const res = await fetch('/index.php?route=checkout/cart/add', {
+      const query = new URLSearchParams(window.location.search);
+      const api = query.get('api') || 'http://localhost:3000';
+      const key = query.get('key') || 'demo-key';
+
+      const response = await fetch(`${api}/api/v1/public/orders`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: formData.toString()
+        body: JSON.stringify({
+          name: checkoutData.name,
+          email: checkoutData.email,
+          address: checkoutData.address,
+          chatbotId: key,
+          sessionId: sessionId,
+          items: cartItems.map(item => ({
+            productId: String(item.product.externalId),
+            quantity: item.quantity
+          }))
+        }),
       });
-      
-      if (!res.ok) throw new Error('Network error');
-      
-      const data = await res.json();
-      
-      if (data.error) {
-        // Product requires options (size, color, etc), so redirect to product page
-        window.open(product.url, '_blank');
-      } else if (data.success) {
-        // Success!
-        alert('Added to cart!');
-        // Dispatch event in case the host store listens to it
-        window.dispatchEvent(new Event('cartUpdated'));
-      } else {
-        // Unknown response, fallback
-        window.open(product.url, '_blank');
+
+      if (!response.ok) {
+        throw new Error('Failed to submit order');
       }
+      
+      // Optionally we could submit a system message to chat history for visual confirmation
+      // submitMessage(`[System Checkout Captured] Name: ${checkoutData.name}, Email: ${checkoutData.email}, Address: ${checkoutData.address}`);
     } catch (err) {
-      // CORS or localhost error, fallback to product page
-      window.open(product.url, '_blank');
+      console.error('Checkout error:', err);
+      alert('There was an issue processing your order. Please try again.');
+      setCheckoutSubmitted(false);
     }
   };
 
@@ -679,6 +709,71 @@ export default function App() {
   const widgetContent = (
     <div className={`widget-container ${isStandalone ? 'standalone-popup' : ''} ${isExpanded ? 'expanded' : ''}`} onClick={() => setShowDropdown(false)}>
       
+      {activeProductView && (
+        <div className="product-overlay">
+          <div className="product-overlay-header">
+            <span className="product-overlay-title">Product Details</span>
+            <button className="product-overlay-close" onClick={() => setActiveProductView(null)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div className="product-overlay-body printez-layout">
+            <div className="printez-left-col">
+              {activeProductView.imageUrl && (
+                <div className="printez-image-container">
+                  <img src={activeProductView.imageUrl} alt={activeProductView.name} />
+                </div>
+              )}
+            </div>
+            
+            <div className="printez-right-col">
+              <h2 className="printez-product-title">{activeProductView.name}</h2>
+              <div className="printez-product-meta">
+                <span className="printez-rating">⭐⭐⭐⭐⭐ 0 reviews</span> | 
+                <span className="printez-item-no"> Item No. {activeProductView.metadata?.model || activeProductView.externalId}</span>
+                {activeProductView.categoryName && <span className="printez-size"> | Cat: {activeProductView.categoryName}</span>}
+              </div>
+
+              <div className="printez-quantity-box">
+                <div className="printez-quantity-header">Select Quantity</div>
+                <div className="printez-quantity-body">
+                  <div className="qty-row">
+                    <button className="qty-btn" onClick={() => setProductQuantity(Math.max(1, productQuantity - 1))}>-</button>
+                    <input type="text" readOnly value={productQuantity} className="qty-input" />
+                    <button className="qty-btn" onClick={() => setProductQuantity(productQuantity + 1)}>+</button>
+                  </div>
+                  <div className="qty-price-display">
+                    ${Number((activeProductView.price || 0) * productQuantity).toFixed(2)}
+                  </div>
+                </div>
+              </div>
+
+              {activeProductView.description && (
+                <div className="printez-desc-box">
+                  <div className="printez-desc-header">- PRODUCT DESCRIPTION</div>
+                  <div className="printez-desc-body" dangerouslySetInnerHTML={{ __html: activeProductView.description }} />
+                </div>
+              )}
+              <button
+                className="printez-personalize-btn" 
+                disabled={activeProductView.stockStatus === 'out_of_stock'}
+                onClick={() => {
+                  handleAddToCart(activeProductView, productQuantity);
+                  setToastMessage(`✓ Added ${activeProductView.name} to Cart`);
+                  setTimeout(() => setToastMessage(null), 3000);
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '6px' }}><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                {activeProductView.stockStatus === 'out_of_stock' ? 'Out of Stock' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── STATE A: DEDICATED CHAT THREAD VIEW ─── */}
       {viewMode === 'chat_thread' ? (
         <>
@@ -722,7 +817,38 @@ export default function App() {
                     <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
                   )}
 
-                  {msg.products && msg.products.length > 0 && (
+                  {msg.products && msg.products.length === 1 && (
+                    <div className="single-product-showcase" style={{ marginTop: '12px' }}>
+                      <div className="showcase-card">
+                        {msg.products[0].imageUrl && (
+                          <div className="showcase-image" onClick={() => { setActiveProductView(msg.products![0]); setProductQuantity(1); }}>
+                            <img src={msg.products[0].imageUrl} alt={msg.products[0].name} loading="lazy" />
+                          </div>
+                        )}
+                        <div className="showcase-details">
+                          <h3 className="showcase-title" onClick={() => { setActiveProductView(msg.products![0]); setProductQuantity(1); }}>{msg.products[0].name}</h3>
+                          {msg.products[0].price && <div className="showcase-price">${Number(msg.products[0].price).toFixed(2)}</div>}
+                          {msg.products[0].description && (
+                            <div className="showcase-desc" dangerouslySetInnerHTML={{ __html: msg.products[0].description }} />
+                          )}
+                          <button
+                            type="button"
+                            className="showcase-cart-btn"
+                            onClick={() => {
+                              handleAddToCart(msg.products![0], 1);
+                              setToastMessage(`✓ Added ${msg.products![0].name} to Cart`);
+                              setTimeout(() => setToastMessage(null), 3000);
+                            }}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                            Add to Cart
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {msg.products && msg.products.length > 1 && (
                     <div style={{ marginTop: '12px' }}>
                       <div className="carousel-nav-bar">
                         <span>Related Products</span>
@@ -745,32 +871,19 @@ export default function App() {
                             </div>
                             {prod.description && (
                               <details className="product-desc-dropdown">
-                                <summary>Details & Specs</summary>
+                                <summary>Brief Summary</summary>
                                 <div className="product-desc-content" dangerouslySetInnerHTML={{ __html: prod.description }} />
                               </details>
                             )}
-                            <div style={{ display: 'flex', gap: '6px', flexDirection: 'column' }}>
-                              {prod.externalId ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleAddToCart(prod)}
-                                    className="carousel-cart-btn"
-                                    style={{ background: '#059669', border: 'none', cursor: 'pointer' }}
-                                  >
-                                    Add to Cart
-                                  </button>
-                                  <a href={prod.url} target="_blank" rel="noopener noreferrer" className="carousel-cart-btn" style={{ background: '#e2e8f0', color: '#0f172a' }}>
-                                    View Details
-                                  </a>
-                                </>
-                              ) : (
-                                prod.url && (
-                                  <a href={prod.url} target="_blank" rel="noopener noreferrer" className="carousel-cart-btn">
-                                    View Product
-                                  </a>
-                                )
-                              )}
+                            <div style={{ display: 'flex', gap: '6px', flexDirection: 'column', marginTop: 'auto' }}>
+                              <button
+                                type="button"
+                                onClick={() => { setActiveProductView(prod); setProductQuantity(1); }}
+                                className="carousel-cart-btn"
+                                style={{ background: '#0f172a', border: 'none', cursor: 'pointer' }}
+                              >
+                                View Details
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -796,6 +909,36 @@ export default function App() {
                           {orderResult}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {msg.sender === 'bot' && msg.intent === 'create_order' && !checkoutSubmitted && (
+                    <div className="inline-checkout-form">
+                      <div className="checkout-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Secure Fast Checkout
+                      </div>
+                      <form onSubmit={handleCheckoutSubmit}>
+                        <div className="checkout-field">
+                          <label>Full Name</label>
+                          <input type="text" required placeholder="Jane Doe" value={checkoutData.name} onChange={e => setCheckoutData({...checkoutData, name: e.target.value})} />
+                        </div>
+                        <div className="checkout-field">
+                          <label>Email Address</label>
+                          <input type="email" required placeholder="jane@example.com" value={checkoutData.email} onChange={e => setCheckoutData({...checkoutData, email: e.target.value})} />
+                        </div>
+                        <div className="checkout-field">
+                          <label>Shipping Address</label>
+                          <textarea required rows={3} placeholder="123 Main St, NY 10001" value={checkoutData.address} onChange={e => setCheckoutData({...checkoutData, address: e.target.value})}></textarea>
+                        </div>
+                        <button type="submit" className="checkout-submit">Confirm Order Details</button>
+                      </form>
+                    </div>
+                  )}
+
+                  {msg.sender === 'bot' && msg.intent === 'create_order' && checkoutSubmitted && (
+                    <div style={{ marginTop: '12px', padding: '14px', background: '#d1fae5', color: '#047857', borderRadius: '12px', fontSize: '13.5px', fontWeight: 600, border: '1px solid #10b981' }}>
+                      Thank you! Your details have been recorded securely. Our specialists are preparing your custom print order right now.
                     </div>
                   )}
 
@@ -1302,6 +1445,35 @@ export default function App() {
             </div>
           </div>
         </>
+      )}
+      {toastMessage && (
+        <div className="add-to-cart-toast">
+          {toastMessage}
+        </div>
+      )}
+
+      {/* Floating Cart Checkout Bar */}
+      {cartItems.length > 0 && !activeProductView && (
+        <div className="floating-cart-bar">
+          <div className="floating-cart-info">
+            {cartCount} item{cartCount > 1 ? 's' : ''} in cart
+          </div>
+          <button 
+            className="floating-checkout-btn"
+            onClick={() => {
+              setViewMode('chat_thread');
+              setMessages(prev => [...prev, {
+                id: 'sys_' + Date.now(),
+                sender: 'bot',
+                text: "Great! Let's get your details to finalize your order.",
+                timestamp: 'Just now',
+                intent: 'create_order'
+              }]);
+            }}
+          >
+            Checkout
+          </button>
+        </div>
       )}
     </div>
   );

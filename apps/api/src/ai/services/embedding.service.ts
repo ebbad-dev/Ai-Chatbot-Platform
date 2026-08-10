@@ -1,9 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
+type PipelineFunction = (text: string, options: { pooling: string; normalize: boolean }) => Promise<{ data: Float32Array }>;
+
 @Injectable()
 export class EmbeddingService implements OnModuleInit {
   private readonly logger = new Logger(EmbeddingService.name);
-  private pipelineInstance: any = null;
+  private pipelineInstance: PipelineFunction | null = null;
 
   async onModuleInit() {
     this.logger.log('Initializing local embedding model (Xenova/all-MiniLM-L6-v2)...');
@@ -16,8 +18,10 @@ export class EmbeddingService implements OnModuleInit {
         { quantized: true }
       );
       this.logger.log('Local embedding model initialized successfully.');
-    } catch (e: any) {
-      this.logger.error('Failed to load local embedding model: ' + e.message, e.stack);
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      const stack = e instanceof Error ? e.stack : undefined;
+      this.logger.error('Failed to load local embedding model: ' + errorMessage, stack);
     }
   }
 

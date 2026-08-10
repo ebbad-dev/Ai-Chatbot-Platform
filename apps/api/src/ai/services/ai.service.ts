@@ -134,6 +134,11 @@ export class AiService {
         imageUrl: prod.images?.[0], // using the first image from JSON array
         url: prod.productUrl || undefined,
         description: prod.description || undefined,
+        stockQuantity: prod.stockQuantity,
+        stockStatus: prod.stockStatus,
+        brand: prod.brand,
+        categoryName: prod.categoryName,
+        metadata: prod.metadata,
       });
 
       if (prod.productUrl && !seenUrls.has(prod.productUrl)) {

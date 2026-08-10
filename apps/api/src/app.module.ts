@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import Redis from 'ioredis';
 import { AppConfigModule, AppConfigService } from './config';
 import { RedisModule } from './redis/redis.module';
 import { HealthModule } from './health/health.module';
@@ -28,11 +30,27 @@ import { EmbeddingModule } from './ai/embedding.module';
     // Global configuration — validates env vars
     AppConfigModule,
 
-    // Rate Limiting (100 req per min)
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    // Rate Limiting (100 req per min) backed by Redis
+    ThrottlerModule.forRootAsync({
+      imports: [AppConfigModule],
+      inject: [AppConfigService],
+      useFactory: (config: AppConfigService) => ({
+        throttlers: [
+          {
+            ttl: 60000,
+            limit: 100,
+          }
+        ],
+        storage: new ThrottlerStorageRedisService(
+          new Redis({
+            host: config.redisHost,
+            port: config.redisPort,
+            password: config.redisPassword || undefined,
+            db: config.redisDb,
+          })
+        ),
+      }),
+    }),
 
     // PostgreSQL — synchronize is always false
     TypeOrmModule.forRootAsync({

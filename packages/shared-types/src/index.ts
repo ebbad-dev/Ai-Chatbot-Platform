@@ -191,6 +191,11 @@ export interface ChatMessageProduct {
   imageUrl?: string;
   url?: string;
   description?: string;
+  stockQuantity?: number | null;
+  stockStatus?: string;
+  brand?: string | null;
+  categoryName?: string | null;
+  metadata?: Record<string, any> | null;
 }
 
 export interface ChatMessage {

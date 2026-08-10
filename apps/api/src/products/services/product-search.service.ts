@@ -87,27 +87,30 @@ export class ProductSearchService {
           [chatbotId]
         );
         
-        const scoredProducts = productsWithEmbeddings.map((p: any) => ({
+        const scoredProducts = productsWithEmbeddings.map((p: { id: string; embedding: number[] }) => ({
           id: p.id,
           score: cosineSimilarity(queryEmbedding, p.embedding)
         }));
         
         // Filter those above a semantic threshold (e.g., 0.3) and grab top 30
-        scoredProducts.sort((a: any, b: any) => b.score - a.score);
-        semanticIds = scoredProducts.filter((p: any) => p.score > 0.3).slice(0, 30).map((p: any) => p.id);
-      } catch (err: any) {
-        this.logger.warn(`Semantic search failed: ${err.message}. Falling back to keyword only.`);
+        scoredProducts.sort((a: { id: string; score: number }, b: { id: string; score: number }) => b.score - a.score);
+        semanticIds = scoredProducts.filter((p: { id: string; score: number }) => p.score > 0.3).slice(0, 30).map((p: { id: string; score: number }) => p.id);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Semantic search failed: ${errorMessage}. Falling back to keyword only.`);
       }
 
       const hasSemanticIds = semanticIds.length > 0;
       const safeSemanticIds = hasSemanticIds ? semanticIds : ['00000000-0000-0000-0000-000000000000']; // Dummy UUID for valid SQL syntax if empty
 
-      // Hybrid matching: Full-text indexing + ilike fallback + pg_trgm fuzzy matching + Semantic Search
       qb.andWhere(
         `(
           to_tsvector('english', coalesce(product.name, '') || ' ' || coalesce(product.description, '')) @@ plainto_tsquery('english', :query)
           OR product.name ILIKE :ilikeQuery
           OR product.description ILIKE :ilikeQuery
+          OR product.externalId ILIKE :ilikeQuery
+          OR product.metadata->>'model' ILIKE :ilikeQuery
+          OR product.metadata->>'sku' ILIKE :ilikeQuery
           OR similarity(product.name, :query) > 0.2
           ${hasSemanticIds ? 'OR product.id IN (:...semanticIds)' : ''}
         )`,
