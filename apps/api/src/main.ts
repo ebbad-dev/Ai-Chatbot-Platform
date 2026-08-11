@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+// Trigger restart
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AppConfigService } from './config';

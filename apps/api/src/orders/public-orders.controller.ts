@@ -1,12 +1,12 @@
 import { Controller, Post, Body, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderProxyService } from './services/order-proxy.service';
-import { CreateOrderRequest } from '../../connectors/connector.interface';
+import { CreateOrderRequest } from '../connectors/connector.interface';
 
 /**
  * PublicOrdersController for handling order checkout submissions directly from the widget.
  */
-@Controller('v1/public/orders')
+@Controller('public/orders')
 export class PublicOrdersController {
   private readonly logger = new Logger(PublicOrdersController.name);
 

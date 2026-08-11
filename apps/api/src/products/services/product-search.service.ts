@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from '../entities/product.entity';
 import { SearchProductsDto, ProductSortBy } from '../dto/search-products.dto';
+import { ProductCategory } from '../entities/product-category.entity';
 import { StockStatus } from '@chatbot-platform/shared-types';
 import { EmbeddingService } from '../../ai/services/embedding.service';
 
@@ -39,8 +40,15 @@ export class ProductSearchService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductCategory)
+    private readonly categoryRepository: Repository<ProductCategory>,
     private readonly embeddingService: EmbeddingService,
   ) {}
+
+  async getCategories(chatbotId: string): Promise<string[]> {
+    const categories = await this.categoryRepository.find({ where: { chatbotId } });
+    return Array.from(new Set(categories.map(c => c.name).filter(n => n)));
+  }
 
   /**
    * Search and filter products for a specific chatbot.

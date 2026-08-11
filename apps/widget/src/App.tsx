@@ -412,25 +412,38 @@ export default function App() {
     }
   };
 
-  const handleAddToCart = (product: ChatMessageProduct, qty: number = 1) => {
+  const handleAddToCart = (product: ChatMessageProduct, quantity: number = 1) => {
     if (!product.externalId) return;
     
     setCartItems(prev => {
       const existing = prev.find(item => item.product.externalId === product.externalId);
       if (existing) {
         return prev.map(item => item.product.externalId === product.externalId 
-          ? { ...item, quantity: item.quantity + qty } 
+          ? { ...item, quantity: item.quantity + quantity } 
           : item
         );
       }
-      return [...prev, { product, quantity: qty }];
+      return [...prev, { product, quantity: quantity }];
     });
     
-    setCartCount(c => c + qty);
+    setCartCount(c => c + quantity);
     setActiveProductView(null);
     
-    // Optional: open checkout automatically or show a toast
-    // setShowCheckout(true);
+    // Automatically bring up the checkout form in the chat
+    setViewMode('chat_thread');
+    setMessages(prev => {
+      const lastMsg = prev[prev.length - 1];
+      if (lastMsg && lastMsg.intent === 'create_order') {
+        return prev;
+      }
+      return [...prev, {
+        id: 'sys_' + Date.now(),
+        sender: 'bot',
+        text: "I've added the item to your cart! You can continue browsing, or fill out the secure form below to finalize your order now.",
+        timestamp: 'Just now',
+        intent: 'create_order'
+      }];
+    });
   };
 
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
@@ -464,8 +477,21 @@ export default function App() {
         throw new Error('Failed to submit order');
       }
       
-      // Optionally we could submit a system message to chat history for visual confirmation
-      // submitMessage(`[System Checkout Captured] Name: ${checkoutData.name}, Email: ${checkoutData.email}, Address: ${checkoutData.address}`);
+      const result = await response.json();
+      
+      // Drop a confirmation message in the chat
+      setMessages(prev => [...prev, {
+        id: 'sys_' + Date.now(),
+        sender: 'bot',
+        text: `✓ Success! Your order (${result.orderId}) has been securely received and queued for fulfillment.`,
+        timestamp: 'Just now',
+      }]);
+      
+      // Clear the cart
+      setCartItems([]);
+      setCartCount(0);
+      setCheckoutData({ name: '', email: '', address: '' });
+      
     } catch (err) {
       console.error('Checkout error:', err);
       alert('There was an issue processing your order. Please try again.');
@@ -639,6 +665,7 @@ export default function App() {
           timestamp: 'Just now',
           sources: result.sources,
           products: result.products,
+          intent: result.intent,
         };
         setMessages((prev) => [...prev, botMsg]);
         setIsLoading(false);
@@ -878,14 +905,35 @@ export default function App() {
                             <div style={{ display: 'flex', gap: '6px', flexDirection: 'column', marginTop: 'auto' }}>
                               <button
                                 type="button"
-                                onClick={() => { setActiveProductView(prod); setProductQuantity(1); }}
+                                onClick={() => {
+                                  handleAddToCart(prod, 1);
+                                  setToastMessage(`✓ Added ${prod.name} to Cart`);
+                                  setTimeout(() => setToastMessage(null), 3000);
+                                }}
                                 className="carousel-cart-btn"
-                                style={{ background: '#0f172a', border: 'none', cursor: 'pointer' }}
+                                style={{ background: '#0f172a', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                               >
-                                View Details
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                                Add to Cart
                               </button>
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {msg.categories && msg.categories.length > 0 && (
+                    <div style={{ marginTop: '12px' }}>
+                      <div className="carousel-nav-bar">
+                        <span>Categories</span>
+                      </div>
+                      <div className="category-grid" style={{ gridTemplateColumns: '1fr', gap: '8px' }}>
+                        {msg.categories.map((cat, idx) => (
+                          <button key={idx} type="button" className="category-pill" onClick={() => sendTextMessage(cat)}>
+                            <span className="category-icon">📁</span>
+                            <span className="category-label">{cat}</span>
+                          </button>
                         ))}
                       </div>
                     </div>

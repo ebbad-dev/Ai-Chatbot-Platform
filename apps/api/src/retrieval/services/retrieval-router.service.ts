@@ -34,6 +34,7 @@ export interface RoutedRetrievalResult {
   orderStatus: OrderStatusResult | null;
   orderHistory?: MockOrderRecord[];
   requiresOrderNumber: boolean;
+  categories?: string[];
 }
 
 /**
@@ -82,6 +83,11 @@ export class RetrievalRouterService {
         const kRes = await this.knowledgeSearch.search(chatbotId, userMessage);
         result.faqs = kRes.faqs;
         result.chunks = kRes.chunks;
+        break;
+      }
+      case QueryIntent.CATEGORY_BROWSE: {
+        const categories = await this.productSearch.getCategories(chatbotId);
+        (result as any).categories = categories; // attach to result
         break;
       }
       case QueryIntent.ORDER_STATUS: {

@@ -67,6 +67,11 @@ export class PublicChatbotsController {
 
     const chatbot = await this.validateChatbotAndOrigin(publicKey, originHeader || dto.visitorOrigin);
 
-    return this.aiService.processChatMessage(chatbot, dto.message, dto.history);
+    try {
+      return await this.aiService.processChatMessage(chatbot, dto.message, dto.history);
+    } catch (e: any) {
+      console.error('CHAT ERROR:', e);
+      throw new BadRequestException(e.message || e.toString());
+    }
   }
 }

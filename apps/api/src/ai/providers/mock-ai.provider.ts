@@ -38,7 +38,7 @@ export class MockAiProvider implements AiProvider {
       replyText = "I can help you check the real-time fulfillment status of your print order! Please enter your custom PrintEZ order tracking number below (for example: **#ORD-7721** or your order confirmation code).";
     }
     // 3. Check for grounded products in context
-    else if (sys.includes('MATCHED PRODUCT CATALOG ITEMS:')) {
+    else if (sys.includes('MATCHED PRODUCT CATALOG ITEMS')) {
       const lines = sys.split('\n');
       const products: string[] = [];
       for (const line of lines) {
@@ -56,6 +56,21 @@ export class MockAiProvider implements AiProvider {
           products.map(p => `• **${p}**`).join('\n') +
           `\n\nAll print materials undergo rigorous 300 DPI pre-press inspection with guaranteed turnaround!`;
       }
+    }
+    // 3b. Check for product categories
+    else if (sys.includes('AVAILABLE PRODUCT CATEGORIES')) {
+      replyText = "Here are the product categories we offer:\n\n";
+      const lines = sys.split('\n');
+      for (const line of lines) {
+        if (line.trim().startsWith('- ')) {
+          replyText += `${line.trim()}\n`;
+        }
+      }
+      replyText += "\nWhich category would you like to explore?";
+    }
+    // 3c. Check for order intent
+    else if (sys.includes('BRAND NEW ORDER OR REORDER')) {
+      replyText = "I can help you place that order right away! Please fill out the secure checkout form below to provide your details and finalize your purchase.";
     }
     // 4. Check for FAQs or Documentation Chunks
     else if (sys.includes('MERCHANT FREQUENTLY ASKED QUESTIONS:') || sys.includes('WEBSITE DOCUMENTATION EXCERPTS:')) {

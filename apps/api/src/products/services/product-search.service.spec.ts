@@ -5,9 +5,14 @@ import { Product } from '../entities/product.entity';
 import { ProductSortBy } from '../dto/search-products.dto';
 import { StockStatus } from '@chatbot-platform/shared-types';
 
+import { ProductCategory } from '../entities/product-category.entity';
+import { EmbeddingService } from '../../ai/services/embedding.service';
+
 describe('ProductSearchService', () => {
   let service: ProductSearchService;
   let mockRepo: Partial<Record<keyof Repository<Product>, Mock>>;
+  let mockCategoryRepo: Partial<Record<keyof Repository<ProductCategory>, Mock>>;
+  let mockEmbeddingService: Partial<Record<keyof EmbeddingService, Mock>>;
   let mockQb: Partial<Record<keyof SelectQueryBuilder<Product>, Mock>>;
 
   beforeEach(() => {
@@ -24,8 +29,20 @@ describe('ProductSearchService', () => {
     mockRepo = {
       createQueryBuilder: vi.fn().mockReturnValue(mockQb),
     };
+    
+    mockCategoryRepo = {
+      find: vi.fn().mockResolvedValue([{ name: 'Apparel' }, { name: 'Forms' }]),
+    };
+    
+    mockEmbeddingService = {
+      embedText: vi.fn().mockResolvedValue([0.1, 0.2]),
+    };
 
-    service = new ProductSearchService(mockRepo as unknown as Repository<Product>);
+    service = new ProductSearchService(
+      mockRepo as unknown as Repository<Product>,
+      mockCategoryRepo as unknown as Repository<ProductCategory>,
+      mockEmbeddingService as unknown as EmbeddingService,
+    );
   });
 
   it('should scope queries to chatbotId and apply default pagination', async () => {

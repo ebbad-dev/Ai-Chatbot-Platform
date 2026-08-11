@@ -208,6 +208,7 @@ export interface ChatMessage {
   intent?: QueryIntent | string;
   isError?: boolean;
   products?: ChatMessageProduct[];
+  categories?: string[];
 }
 
 export interface ChatRequest {

@@ -19,6 +19,7 @@ export interface ProcessedChatReply {
   confidence: number;
   fallbackTriggered: boolean;
   products?: import('@chatbot-platform/shared-types').ChatMessageProduct[];
+  categories?: string[];
 }
 
 /**
@@ -107,11 +108,19 @@ export class AiService {
       finalReply.toLowerCase().includes("cannot answer based on");
 
     if (isZeroMatches || indicatesUnknown || retrieval.confidence < 0.45) {
-      fallbackTriggered = true;
-      if (isZeroMatches || indicatesUnknown) {
+      // We record that a fallback condition was met, but we only forcibly overwrite 
+      // the LLM's response if it explicitly says it doesn't know, or if it's the 
+      // very first message and absolutely zero context was found.
+      // This prevents breaking active conversational flows (like order creation).
+      const shouldOverride = indicatesUnknown || (isZeroMatches && history.length === 0);
+      
+      if (shouldOverride) {
+        fallbackTriggered = true;
         finalReply =
           chatbot.fallbackMessage ||
           "I don't have enough verified information in our catalog or policy docs to answer that accurately. Please reach out to our customer support specialists or check our website directly for further assistance!";
+      } else if (indicatesUnknown || isZeroMatches) {
+        fallbackTriggered = true;
       }
       // Record unanswered question for Phase G resolution workflow
       try {
@@ -162,6 +171,7 @@ export class AiService {
       confidence: retrieval.confidence,
       fallbackTriggered,
       products: returnedProducts.length > 0 ? returnedProducts : undefined,
+      categories: retrieval.categories && retrieval.categories.length > 0 ? retrieval.categories : undefined,
     };
   }
 }

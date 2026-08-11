@@ -23,7 +23,7 @@ export class IntentDetectorService {
   private readonly logger = new Logger(IntentDetectorService.name);
 
   // Regex for extracting order IDs (e.g. #12345, ORD-9988, order 54321)
-  private readonly orderIdRegex = /(?:order|ord|tracking|reference|#|id)\s*[:#-]?\s*([a-zA-Z0-9-]{4,15})/i;
+  private readonly orderIdRegex = /(?:order(?: number| id)?|ord|tracking|reference|#)\s*[:#-]?\s*([0-9]{4,15}|[a-zA-Z]{2,5}-[0-9]{3,10})/i;
 
   detectIntent(message: string): IntentDetectionResult {
     const text = (message || '').trim().toLowerCase();
@@ -84,9 +84,9 @@ export class IntentDetectorService {
     }
 
     // 7. Check for Category Browse
-    if (/show me all|list of|browse|catalog|categories|types of|what kinds? of/i.test(text)) {
+    if (/show me all|list of|enlist|browse|catalog|categor(y|ies)|types of|what kinds? of/i.test(text)) {
       entities.searchQuery = this.cleanSearchQuery(message);
-      return { intent: QueryIntent.CATEGORY_BROWSE, confidence: 0.8, entities };
+      return { intent: QueryIntent.CATEGORY_BROWSE, confidence: 0.9, entities };
     }
 
     // 8. Check for Reorder Intent
@@ -99,7 +99,7 @@ export class IntentDetectorService {
     }
 
     // 9. Check for Create Order Intent
-    if (/place (an|a new)? order|buy (this|now)|purchase|add to cart/i.test(text)) {
+    if (/place (an|a new)? order|want to order|order (some|a)|buy (this|now)?|purchase|add to cart|checkout/i.test(text)) {
       entities.searchQuery = this.cleanSearchQuery(message);
       return { intent: QueryIntent.CREATE_ORDER, confidence: 0.85, entities };
     }

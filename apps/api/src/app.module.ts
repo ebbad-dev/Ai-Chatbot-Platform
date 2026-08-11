@@ -41,14 +41,16 @@ import { EmbeddingModule } from './ai/embedding.module';
             limit: 100,
           }
         ],
-        storage: new ThrottlerStorageRedisService(
-          new Redis({
-            host: config.redisHost,
-            port: config.redisPort,
-            password: config.redisPassword || undefined,
-            db: config.redisDb,
-          })
-        ),
+        storage: config.redisEnabled 
+          ? new ThrottlerStorageRedisService(
+              new Redis({
+                host: config.redisHost,
+                port: config.redisPort,
+                password: config.redisPassword || undefined,
+                db: config.redisDb,
+              })
+            )
+          : undefined,
       }),
     }),
 

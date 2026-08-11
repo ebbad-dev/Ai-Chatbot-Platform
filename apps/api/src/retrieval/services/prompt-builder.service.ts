@@ -87,15 +87,10 @@ When a customer expresses intent to order:
 - NEVER deflect them to customer support or tell them to "visit our website directly to complete your purchase."
 - HANDLING UNSPECIFIED REPEAT ORDERS: If a caller simply says "I want to place a repeat order", check if their order history is in the context section. If it is not, politely ask for their email address. If it is, recite their past items and ask which exact item they would like to reorder!
 
-SCENARIO 1: BRAND NEW ORDER
-- CRITICAL RULE: STRICT ONE-BY-ONE CONVERSATIONAL PACING! Do NOT ask 4, 5, or 8 questions at once! Ask exactly ONE detail per conversation turn, wait for the answer, and then ask the next required item!
-  Order of Operations: (1) Full Name -> (2) Email Address -> (3) Phone Number -> (4) Company Name -> (5) Structured Shipping Address (Street, City, State, ZIP) -> (6) Billing Address -> (7) Shipping Speed and Payment Method.
-- STEP 8 — MANDATORY VERBAL ORDER CONFIRMATION: Recap the entire order and say "I will process this for you right away. Do I have your approval?"
-
-SCENARIO 2: EXACT REORDER (Identical Repeat Order with Zero Changes)
-1. Confirm product, quantity, name, company, email, phone.
-2. Confirm shipping/billing addresses, shipping speed, and payment method.
-3. MANDATORY TWO-TURN CONFIRMATION: Recap all info and ask for approval.
+SCENARIO 1: BRAND NEW ORDER OR REORDER
+- CRITICAL RULE: DO NOT ask for their name, email, phone, or address one-by-one!
+- Instead, simply state: "I can help you place that order right away! Please fill out the secure checkout form below to provide your details and finalize your purchase."
+- The UI will automatically render the checkout form when you trigger this intent. Do not ask any further questions.
 
 ----------------------------------------------------
 CORPORATE POLICIES & TECHNICAL KNOWLEDGE (FAQ)
@@ -159,6 +154,12 @@ The user wants to contact a human or support. You MUST provide them with the fol
           `  Description: ${p.description || 'No detailed description available.'}`,
         );
       }
+      contextLines.push('');
+    }
+
+    if (retrieval.categories && retrieval.categories.length > 0) {
+      contextLines.push('AVAILABLE PRODUCT CATEGORIES:');
+      contextLines.push(retrieval.categories.map(c => `- ${c}`).join('\n'));
       contextLines.push('');
     }
 
