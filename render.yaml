@@ -2,7 +2,7 @@ services:
   # 1. NestJS Backend API Service
   - type: web
     name: chatbot-api
-    env: node
+    runtime: node
     plan: free
     region: singapore
     buildCommand: npm install && pnpm --filter @ai-chatbot/shared-types build && pnpm --filter @chatbot-platform/api build
@@ -62,10 +62,10 @@ services:
   # 2. Widget Static Site
   - type: web
     name: chatbot-widget
-    env: static
+    runtime: static
     region: singapore
     buildCommand: npm install && pnpm --filter @ai-chatbot/shared-types build && pnpm --filter @ai-chatbot/widget build
-    publishPath: ./apps/widget/dist
+    staticPublishPath: ./apps/widget/dist
     routes:
       - type: rewrite
         source: /*
