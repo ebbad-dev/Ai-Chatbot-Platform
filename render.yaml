@@ -5,7 +5,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm install && pnpm --filter @ai-chatbot/shared-types build && pnpm --filter @chatbot-platform/api build
+    buildCommand: npm install && npm run build
     startCommand: node apps/api/dist/main.js
     envVars:
       - key: NODE_ENV
@@ -16,6 +16,8 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: "*"
+      - key: DATABASE_SSL
+        value: "true"
       - key: DATABASE_HOST
         fromDatabase:
           name: chatbot-db
@@ -65,7 +67,7 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm install && pnpm --filter @ai-chatbot/shared-types build && pnpm --filter @ai-chatbot/widget build
+    buildCommand: npm install && npm run build
     startCommand: npx serve -s apps/widget/dist -p 10000
     envVars:
       - key: PORT

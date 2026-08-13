@@ -40,7 +40,7 @@ export function getDataSourceOptions(): DataSourceOptions {
     database: requireEnv('DATABASE_NAME'),
     username: requireEnv('DATABASE_USER'),
     password: requireEnv('DATABASE_PASSWORD'),
-    ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    ssl: (process.env.DATABASE_SSL === 'true' || process.env.NODE_ENV === 'production') ? { rejectUnauthorized: false } : false,
     logging: process.env.DATABASE_LOGGING === 'true',
 
     // NEVER enable synchronize in any environment.
@@ -49,7 +49,7 @@ export function getDataSourceOptions(): DataSourceOptions {
 
     entities: [path.join(__dirname, '../**/*.entity{.ts,.js}')],
     migrations: [path.join(__dirname, 'migrations/*{.ts,.js}')],
-    migrationsRun: false,
+    migrationsRun: true,
   };
 }
 
