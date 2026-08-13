@@ -1,0 +1,86 @@
+services:
+  # 1. NestJS Backend API Service
+  - type: web
+    name: chatbot-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && pnpm --filter @ai-chatbot/shared-types build && pnpm --filter @chatbot-platform/api build
+    startCommand: node apps/api/dist/main.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: API_BASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: chatbot-db
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: chatbot-db
+          property: port
+      - key: DATABASE_USER
+        fromDatabase:
+          name: chatbot-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: chatbot-db
+          property: password
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: chatbot-db
+          property: database
+      - key: REDIS_ENABLED
+        value: "true"
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: chatbot-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: chatbot-redis
+          property: port
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: CRAWLER_USER_AGENT
+        value: "PrintEZ AI Crawler / 1.0"
+      - key: ADMIN_API_KEY
+        value: admin_secret_key_12345678901234567890_secure
+
+  # 2. Widget Static Site
+  - type: web
+    name: chatbot-widget
+    runtime: static
+    region: singapore
+    buildCommand: npm install && pnpm --filter @ai-chatbot/shared-types build && pnpm --filter @ai-chatbot/widget build
+    staticPublishPath: ./apps/widget/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # 3. Redis Queue Storage
+  - type: redis
+    name: chatbot-redis
+    region: singapore
+    plan: free
+
+# 4. PostgreSQL Database
+databases:
+  - name: chatbot-db
+    databaseName: chatbot_db
+    user: chatbot_admin
+    region: singapore
+    plan: free
