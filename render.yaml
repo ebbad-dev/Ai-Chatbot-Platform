@@ -1,3 +1,4 @@
+# Render Blueprint v1 - PrintEZ AI Chatbot Platform Deployment
 services:
   # 1. NestJS Backend API Service
   - type: web
