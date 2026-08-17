@@ -277,7 +277,7 @@ export default function App() {
 
     const query = new URLSearchParams(window.location.search);
     const key = query.get('key');
-    const api = query.get('api') || 'http://localhost:3000';
+    const api = query.get('api') || 'https://chatbot-api-n8sc.onrender.com';
 
     if (key) {
       fetch(`${api}/api/v1/public/chatbots/${key}/config`)
@@ -456,7 +456,7 @@ export default function App() {
     
     try {
       const query = new URLSearchParams(window.location.search);
-      const api = query.get('api') || 'http://localhost:3000';
+      const api = query.get('api') || 'https://chatbot-api-n8sc.onrender.com';
       const key = query.get('key') || 'demo-key';
 
       const response = await fetch(`${api}/api/v1/public/orders`, {
@@ -586,7 +586,7 @@ export default function App() {
     try {
       const query = new URLSearchParams(window.location.search);
       const key = query.get('key') || 'demo-key';
-      const api = query.get('api') || 'http://localhost:3000';
+      const api = query.get('api') || 'https://chatbot-api-n8sc.onrender.com';
       const origin = query.get('origin') || window.location.origin;
       const response = await fetch(`${api}/api/v1/public/chat`, {
         method: 'POST',
@@ -644,7 +644,7 @@ export default function App() {
 
     const query = new URLSearchParams(window.location.search);
     const key = query.get('key') || 'demo-key';
-    const api = query.get('api') || 'http://localhost:3000';
+    const api = query.get('api') || 'https://chatbot-api-n8sc.onrender.com';
     const origin = query.get('origin') || window.location.origin;
 
     try {
