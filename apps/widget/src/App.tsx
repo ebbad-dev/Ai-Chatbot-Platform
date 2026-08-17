@@ -7,6 +7,7 @@ type ViewMode = 'nav_deck' | 'chat_thread';
 type EmojiCategory = 'all' | 'smileys' | 'people' | 'commerce' | 'symbols';
 
 interface FaqItem {
+  id: string;
   question: string;
   answer: string;
 }
@@ -61,7 +62,8 @@ const TOP_FAQS: FaqItem[] = [
   { id: 'faq4', question: 'How long does production take?', answer: 'Standard production times vary by product, but most custom printed items ship within 3-5 business days after proof approval. Rush processing is available on select items during checkout.' }
 ];
 
-const SAMPLE_PRODUCTS: ProductItem[] = [];
+const _SAMPLE_PRODUCTS: ProductItem[] = [];
+void _SAMPLE_PRODUCTS;
 
 // Category icons for the browse-by-category UI
 const CATEGORY_ICONS: Record<string, string> = {
@@ -226,7 +228,8 @@ export default function App() {
   const [csatStatus, setCsatStatus] = useState<{ [msgId: string]: string }>({});
   const [cartCount, setCartCount] = useState<number>(0);
   const [cartItems, setCartItems] = useState<Array<{ product: ChatMessageProduct, quantity: number }>>([]);
-  const [showCheckout, setShowCheckout] = useState<boolean>(false);
+  const [_showCheckout, _setShowCheckout] = useState<boolean>(false);
+  void _showCheckout; void _setShowCheckout;
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Conversation Thread History State
@@ -251,7 +254,8 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Carousel ref for effortless button scrolling
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const _carouselRef = useRef<HTMLDivElement>(null);
+  void _carouselRef;
 
   const isStandalone = typeof window !== 'undefined' && window.parent === window;
 
@@ -773,7 +777,7 @@ export default function App() {
                     <button className="qty-btn" onClick={() => setProductQuantity(productQuantity + 1)}>+</button>
                   </div>
                   <div className="qty-price-display">
-                    ${Number((activeProductView.price || 0) * productQuantity).toFixed(2)}
+                    ${(Number(activeProductView.price || 0) * productQuantity).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -930,7 +934,7 @@ export default function App() {
                       </div>
                       <div className="category-grid" style={{ gridTemplateColumns: '1fr', gap: '8px' }}>
                         {msg.categories.map((cat, idx) => (
-                          <button key={idx} type="button" className="category-pill" onClick={() => sendTextMessage(cat)}>
+                          <button key={idx} type="button" className="category-pill" onClick={() => submitMessage(cat)}>
                             <span className="category-icon">📁</span>
                             <span className="category-label">{cat}</span>
                           </button>
@@ -1510,7 +1514,7 @@ export default function App() {
             className="floating-checkout-btn"
             onClick={() => {
               setViewMode('chat_thread');
-              setMessages(prev => [...prev, {
+              setMessages((prev: ChatMessage[]) => [...prev, {
                 id: 'sys_' + Date.now(),
                 sender: 'bot',
                 text: "Great! Let's get your details to finalize your order.",
