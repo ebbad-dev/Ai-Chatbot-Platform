@@ -52,7 +52,7 @@ async function bootstrap(): Promise<void> {
 
   // CORS — configurable origins
   app.enableCors({
-    origin: config.corsOrigins,
+    origin: config.corsOrigins === '*' ? true : config.corsOrigins,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
