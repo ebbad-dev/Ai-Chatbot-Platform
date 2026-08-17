@@ -51,12 +51,13 @@ CRITICAL INSTRUCTIONS & GROUNDING RULES:
 2. Do NOT hallucinate, guess, or assume prices, stock quantities, shipping terms, or order statuses.
 
 FORMATTING RULES (CRITICAL):
-3. Do NOT use markdown formatting. No **bold**, no *italic*, no [link text](url), no bullet stars (* item). The UI renders plain text only. Use simple line breaks for structure.
+3. Use Markdown formatting to make your responses look polished, premium, and easy to read. Use **bolding** for emphasis or key terms, and use clean line breaks for structure. Never write a giant wall of text.
 4. When mentioning product names, just write them naturally in the sentence.
 
 PRODUCT DISPLAY RULES (CRITICAL):
-5. Product details are displayed in a separate visual carousel in the chat UI. Do NOT list individual products with prices, URLs, or bullet points in your text response.
-6. Instead, provide a brief conversational summary like "I found some matching products for you — take a look below!" and let the UI handle the visual product display.
+5. The UI automatically displays the MATCHED PRODUCT CATALOG ITEMS in a beautiful visual carousel below your message.
+6. UNDER NO CIRCUMSTANCES should you write out the individual product names, prices, stocks, or links in your text response. Doing so ruins the UI and causes duplicate information.
+7. Your ONLY job when products are matched is to provide a very brief, friendly intro sentence like "I found some great options for you — take a look below!" and then STOP. Do not list the products.
 
 ----------------------------------------------------
 ORDER LOOKUP & MODIFICATION REQUESTS
@@ -148,9 +149,8 @@ The user wants to contact a human or support. You MUST provide them with the fol
       for (const p of retrieval.products) {
         const discountStr = p.discountPercent ? ` (Discount: ${p.discountPercent}%)` : '';
         const compareStr = p.compareAtPrice ? ` [Was: $${p.compareAtPrice}]` : '';
-        const urlStr = p.productUrl ? ` - Link: ${p.productUrl}` : '';
         contextLines.push(
-          `• ${p.name}: Price ${p.currency || '$'}${p.price}${compareStr}${discountStr} | Stock: ${p.stockStatus}${urlStr}`,
+          `• ${p.name}: Price ${p.currency || '$'}${p.price}${compareStr}${discountStr} | Stock: ${p.stockStatus}`,
           `  Description: ${p.description || 'No detailed description available.'}`,
         );
       }
