@@ -97,8 +97,11 @@ export class AppConfigService {
 
   // ─── CORS ────────────────────────────────────────────
 
-  get corsOrigins(): string[] {
+  get corsOrigins(): string | string[] {
     const origins = this.configService.get<string>('CORS_ORIGINS') || '';
+    if (origins.trim() === '*') {
+      return '*';
+    }
     return origins
       .split(',')
       .map((o: string) => o.trim())
