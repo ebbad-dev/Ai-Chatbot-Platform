@@ -590,7 +590,7 @@ export default function App() {
       const origin = query.get('origin') || window.location.origin;
       const response = await fetch(`${api}/api/v1/public/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Origin': origin },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           publicKey: key,
           sessionId: sessionId,
@@ -650,7 +650,7 @@ export default function App() {
     try {
       const response = await fetch(`${api}/api/v1/public/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Origin': origin },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           publicKey: key,
           sessionId: sessionId,
