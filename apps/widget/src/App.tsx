@@ -238,7 +238,7 @@ export default function App() {
   const [isViewingArchived, setIsViewingArchived] = useState<boolean>(false);
 
   const [config, setConfig] = useState<ChatbotPublicConfig>({
-    publicKey: 'demo-key',
+    publicKey: 'bot_pub_62bd602a804204b51720cda797aa07e4a54610d0308c0e75c4774b26d1b4ecae',
     name: 'PrintEZ AI Specialist',
     welcomeMessage: "Hi there 👋\n\nI'm your PrintEZ AI Agent working alongside our print production specialists.\n\nAsk me a question or choose an option below.",
     fallbackMessage: "Let me alert our print production specialists to assist you with your custom specifications!",
@@ -457,7 +457,7 @@ export default function App() {
     try {
       const query = new URLSearchParams(window.location.search);
       const api = query.get('api') || 'https://chatbot-api-n8sc.onrender.com';
-      const key = query.get('key') || 'demo-key';
+      const key = query.get('key') || 'bot_pub_62bd602a804204b51720cda797aa07e4a54610d0308c0e75c4774b26d1b4ecae';
 
       const response = await fetch(`${api}/api/v1/public/orders`, {
         method: 'POST',
@@ -585,7 +585,7 @@ export default function App() {
     const orderMsg = `Check order #${orderQueryInput.trim()}`;
     try {
       const query = new URLSearchParams(window.location.search);
-      const key = query.get('key') || 'demo-key';
+      const key = query.get('key') || 'bot_pub_62bd602a804204b51720cda797aa07e4a54610d0308c0e75c4774b26d1b4ecae';
       const api = query.get('api') || 'https://chatbot-api-n8sc.onrender.com';
       const origin = query.get('origin') || window.location.origin;
       const response = await fetch(`${api}/api/v1/public/chat`, {
@@ -643,7 +643,7 @@ export default function App() {
     playChime('send');
 
     const query = new URLSearchParams(window.location.search);
-    const key = query.get('key') || 'demo-key';
+    const key = query.get('key') || 'bot_pub_62bd602a804204b51720cda797aa07e4a54610d0308c0e75c4774b26d1b4ecae';
     const api = query.get('api') || 'https://chatbot-api-n8sc.onrender.com';
     const origin = query.get('origin') || window.location.origin;
 
