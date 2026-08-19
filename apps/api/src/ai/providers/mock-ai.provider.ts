@@ -37,61 +37,59 @@ export class MockAiProvider implements AiProvider {
     else if (sys.includes('The visitor wants to check an order status but has not provided a valid order tracking number')) {
       replyText = "I can help you check the real-time fulfillment status of your print order! Please enter your custom PrintEZ order tracking number below (for example: **#ORD-7721** or your order confirmation code).";
     }
-    // 3. Check for grounded products in context
-    else if (sys.includes('MATCHED PRODUCT CATALOG ITEMS')) {
-      const lines = sys.split('\n');
-      const products: string[] = [];
-      for (const line of lines) {
-        if (line.trim().startsWith('• ')) {
-          products.push(line.trim().substring(2));
-        }
-      }
+    else {
+      let hasFaq = false;
+      let faqText = "";
       
-      if (lastUserMsg.includes('price') || lastUserMsg.includes('cost') || lastUserMsg.includes('how much')) {
-        replyText = `Based on our current print catalog, here is our commercial pricing Breakdown:\n\n` +
-          products.map(p => `• **${p.split(' - ')[0]}**`).join('\n') +
-          `\n\nCommercial bulk runs over 250 units automatically qualify for wholesale tier discounting up to 40% off!`;
-      } else {
-        replyText = `Here are our matching high-resolution custom print options available for volume ordering:\n\n` +
-          products.map(p => `• **${p}**`).join('\n') +
-          `\n\nAll print materials undergo rigorous 300 DPI pre-press inspection with guaranteed turnaround!`;
-      }
-    }
-    // 3b. Check for product categories
-    else if (sys.includes('AVAILABLE PRODUCT CATEGORIES')) {
-      replyText = "Here are the product categories we offer:\n\n";
-      const lines = sys.split('\n');
-      for (const line of lines) {
-        if (line.trim().startsWith('- ')) {
-          replyText += `${line.trim()}\n`;
+      // 3. Check for FAQs or Documentation Chunks FIRST
+      if (sys.includes('MERCHANT FREQUENTLY ASKED QUESTIONS:') || sys.includes('WEBSITE DOCUMENTATION EXCERPTS:')) {
+        const lines = sys.split('\n');
+        let foundExcerpt = '';
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith('A: ')) {
+            foundExcerpt = lines[i].substring(3);
+            break;
+          } else if (lines[i].startsWith('[Excerpts from:')) {
+            foundExcerpt = lines[i + 1] || 'Verified custom print SLAs and shipping policies apply.';
+            break;
+          }
+        }
+        if (foundExcerpt) {
+          hasFaq = true;
+          faqText = `According to our verified merchant policy:\n\n"${foundExcerpt}"\n\nLet our print production specialists know if you need any tailored customizations or bulk sample kits!`;
+          replyText = faqText;
         }
       }
-      replyText += "\nWhich category would you like to explore?";
-    }
-    // 3c. Check for order intent
-    else if (sys.includes('BRAND NEW ORDER OR REORDER')) {
-      replyText = "I can help you place that order right away! Please fill out the secure checkout form below to provide your details and finalize your purchase.";
-    }
-    // 4. Check for FAQs or Documentation Chunks
-    else if (sys.includes('MERCHANT FREQUENTLY ASKED QUESTIONS:') || sys.includes('WEBSITE DOCUMENTATION EXCERPTS:')) {
-      const lines = sys.split('\n');
-      let foundExcerpt = '';
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].startsWith('A: ')) {
-          foundExcerpt = lines[i].substring(3);
-          break;
-        } else if (lines[i].startsWith('[Excerpts from:')) {
-          foundExcerpt = lines[i + 1] || 'Verified custom print SLAs and shipping policies apply.';
-          break;
+
+      // 4. Check for grounded products in context
+      if (sys.includes('MATCHED PRODUCT CATALOG ITEMS')) {
+        const productIntro = "I found some great options for you — take a look below!";
+        
+        if (hasFaq) {
+          replyText = `${faqText}\n\n${productIntro}`;
+        } else {
+          replyText = productIntro;
         }
       }
-      if (foundExcerpt) {
-        replyText = `According to our verified merchant policy:\n\n"${foundExcerpt}"\n\nLet our print production specialists know if you need any tailored customizations or bulk sample kits!`;
+      // 5. Check for product categories
+      else if (!hasFaq && sys.includes('AVAILABLE PRODUCT CATEGORIES')) {
+        replyText = "Here are the product categories we offer:\n\n";
+        const lines = sys.split('\n');
+        for (const line of lines) {
+          if (line.trim().startsWith('- ')) {
+            replyText += `${line.trim()}\n`;
+          }
+        }
+        replyText += "\nWhich category would you like to explore?";
       }
-    }
-    // 5. Check for greetings
-    else if (lastUserMsg.includes('hi') || lastUserMsg.includes('hello') || lastUserMsg.includes('hey') || lastUserMsg.includes('morning') || lastUserMsg.includes('afternoon')) {
-      replyText = "Hi there! 👋 I'm your PrintEZ AI Assistant working alongside our custom print production specialists. How can we assist you with your print materials or order fulfillment today?";
+      // 6. Check for order intent
+      else if (!hasFaq && sys.includes('BRAND NEW ORDER OR REORDER')) {
+        replyText = "I can help you place that order right away! Please fill out the secure checkout form below to provide your details and finalize your purchase.";
+      }
+      // 7. Check for greetings
+      else if (!hasFaq && (lastUserMsg.includes('hi') || lastUserMsg.includes('hello') || lastUserMsg.includes('hey') || lastUserMsg.includes('morning') || lastUserMsg.includes('afternoon'))) {
+        replyText = "Hi there! 👋 I'm your PrintEZ AI Assistant working alongside our custom print production specialists. How can we assist you with your print materials or order fulfillment today?";
+      }
     }
 
     return {

@@ -199,6 +199,12 @@ export default function App() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'WIDGET_EXPAND', payload: isExpanded }, '*');
+    }
+  }, [isExpanded]);
+
   // E-commerce Overlays
   const [activeProductView, setActiveProductView] = useState<ChatMessageProduct | null>(null);
   const [productQuantity, setProductQuantity] = useState<number>(1);

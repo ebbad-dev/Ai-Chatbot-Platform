@@ -163,7 +163,7 @@
       pointer-events: none;
       transform-origin: bottom ${position === 'bottom-left' ? 'left' : 'right'};
       transform: translateY(20px) scale(0.92);
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       flex-direction: column;
     }
@@ -173,12 +173,55 @@
       pointer-events: auto;
       transform: translateY(0) scale(1);
     }
+    
+    .iframe-wrapper.is-expanded {
+      width: 550px;
+      height: 80vh;
+    }
 
     .chat-iframe {
       width: 100%;
       height: 100%;
       border: none;
       background: transparent;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .chat-iframe.is-ready {
+      opacity: 1;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: #334155;
+      z-index: 1;
+      transition: opacity 0.3s ease;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(79, 70, 229, 0.2);
+      border-top-color: ${primaryColor};
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    @keyframes spin { 
+      to { transform: rotate(360deg); } 
     }
 
     @media (max-width: 480px) {
@@ -202,6 +245,15 @@
   const wrapper = document.createElement('div');
   wrapper.className = 'iframe-wrapper';
   
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'loading-overlay';
+  loadingOverlay.innerHTML = `
+    <div class="loading-spinner"></div>
+    <div style="font-weight: 500; font-size: 14px;">Waking up AI Agent...</div>
+    <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">(This takes ~40s on free tier)</div>
+  `;
+  wrapper.appendChild(loadingOverlay);
+
   const iframe = document.createElement('iframe');
   iframe.className = 'chat-iframe';
   iframe.setAttribute('src', targetIframeUrl);
@@ -227,6 +279,7 @@
   shadow.appendChild(button);
 
   let isOpen = false;
+  let isWidgetReady = false;
 
   function setOpenState(open: boolean) {
     isOpen = open;
@@ -234,7 +287,6 @@
       wrapper.classList.add('is-open');
       button.classList.add('is-open');
       button.setAttribute('aria-label', 'Close AI Assistant Chat');
-      // Notify iframe that it opened
       iframe.contentWindow?.postMessage({ type: 'WIDGET_OPEN' }, '*');
     } else {
       wrapper.classList.remove('is-open');
@@ -246,16 +298,36 @@
 
   button.addEventListener('click', () => setOpenState(!isOpen));
 
+  // Polling mechanism to gracefully handle Render 504 timeouts during cold starts
+  const reloadInterval = setInterval(() => {
+    if (!isWidgetReady) {
+      console.info('[ChatbotPlatform] Retrying connection to waking server...');
+      iframe.src = targetIframeUrl;
+    } else {
+      clearInterval(reloadInterval);
+    }
+  }, 15000);
+
   // Listen for postMessage events from hosted widget iframe
   window.addEventListener('message', (event) => {
-    // Basic verification that event is from our iframe
     if (event.source !== iframe.contentWindow) return;
 
     const { type, payload } = event.data || {};
     if (type === 'WIDGET_CLOSE') {
       setOpenState(false);
+    } else if (type === 'WIDGET_EXPAND') {
+      if (payload) {
+        wrapper.classList.add('is-expanded');
+      } else {
+        wrapper.classList.remove('is-expanded');
+      }
     } else if (type === 'WIDGET_READY') {
-      console.info('[ChatbotPlatform] Widget iframe reported ready status.', payload || '');
+      isWidgetReady = true;
+      clearInterval(reloadInterval);
+      iframe.classList.add('is-ready');
+      loadingOverlay.style.opacity = '0';
+      setTimeout(() => loadingOverlay.remove(), 300);
+      console.info('[ChatbotPlatform] Widget iframe reported ready status.');
     }
   });
 
