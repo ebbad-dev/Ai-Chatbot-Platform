@@ -176,7 +176,7 @@
     
     .iframe-wrapper.is-expanded {
       width: 550px;
-      height: 80vh;
+      height: 850px;
     }
 
     .chat-iframe {
