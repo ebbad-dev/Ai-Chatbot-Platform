@@ -110,16 +110,21 @@ export class AppConfigService {
 
   // ─── AI Provider Keys (Optional) ─────────────────────
 
+  private getCleanKey(key: string): string {
+    const val = this.configService.get<string>(key) || '';
+    return val.replace(/^["']|["']$/g, '').trim();
+  }
+
   get geminiApiKey(): string {
-    return this.configService.get<string>('GEMINI_API_KEY') || '';
+    return this.getCleanKey('GEMINI_API_KEY');
   }
 
   get groqApiKey(): string {
-    return this.configService.get<string>('GROQ_API_KEY') || '';
+    return this.getCleanKey('GROQ_API_KEY');
   }
 
   get openRouterApiKey(): string {
-    return this.configService.get<string>('OPENROUTER_API_KEY') || '';
+    return this.getCleanKey('OPENROUTER_API_KEY');
   }
 
   // ─── Crawler Limits ───────────────────────────────────
