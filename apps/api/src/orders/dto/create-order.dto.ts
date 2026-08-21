@@ -25,6 +25,10 @@ export class CreateOrderDto {
   address: string;
 
   @IsString()
+  @IsNotEmpty()
+  phone: string;
+
+  @IsString()
   @IsOptional()
   chatbotId?: string;
 

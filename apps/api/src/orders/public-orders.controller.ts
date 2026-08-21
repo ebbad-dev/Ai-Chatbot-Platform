@@ -26,6 +26,7 @@ export class PublicOrdersController {
         customer: {
           firstname: createOrderDto.name,
           email: createOrderDto.email,
+          telephone: createOrderDto.phone,
         },
         shipping_address: {
           address_1: createOrderDto.address

@@ -208,7 +208,7 @@ export default function App() {
   // E-commerce Overlays
   const [activeProductView, setActiveProductView] = useState<ChatMessageProduct | null>(null);
   const [productQuantity, setProductQuantity] = useState<number>(1);
-  const [checkoutData, setCheckoutData] = useState({ name: '', email: '', address: '' });
+  const [checkoutData, setCheckoutData] = useState({ name: '', email: '', phone: '', address: '' });
   const [checkoutSubmitted, setCheckoutSubmitted] = useState(false);
 
   // Conversational animation delay
@@ -473,6 +473,7 @@ export default function App() {
         body: JSON.stringify({
           name: checkoutData.name,
           email: checkoutData.email,
+          phone: checkoutData.phone,
           address: checkoutData.address,
           chatbotId: key,
           sessionId: sessionId,
@@ -500,7 +501,7 @@ export default function App() {
       // Clear the cart
       setCartItems([]);
       setCartCount(0);
-      setCheckoutData({ name: '', email: '', address: '' });
+      setCheckoutData({ name: '', email: '', phone: '', address: '' });
       
     } catch (err) {
       console.error('Checkout error:', err);
@@ -984,6 +985,10 @@ export default function App() {
                         <div className="checkout-field">
                           <label>Email Address</label>
                           <input type="email" required placeholder="jane@example.com" value={checkoutData.email} onChange={e => setCheckoutData({...checkoutData, email: e.target.value})} />
+                        </div>
+                        <div className="checkout-field">
+                          <label>Phone Number</label>
+                          <input type="tel" required placeholder="(555) 123-4567" value={checkoutData.phone} onChange={e => setCheckoutData({...checkoutData, phone: e.target.value})} />
                         </div>
                         <div className="checkout-field">
                           <label>Shipping Address</label>
