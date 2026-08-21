@@ -25,7 +25,7 @@ export class HttpAiProvider implements AiProvider {
     // 1. Attempt Google Gemini chat completion (~1500 free requests/day via Google AI Studio)
     if (geminiKey && geminiKey.length > 5) {
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${geminiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -44,9 +44,12 @@ export class HttpAiProvider implements AiProvider {
             return {
               content,
               provider: 'Google Gemini (Free Tier)',
-              model: 'gemini-flash-latest',
+              model: 'gemini-1.5-flash-latest',
             };
           }
+        } else {
+          const err = await res.text();
+          this.logger.warn(`Gemini API failed with status ${res.status}: ${err}`);
         }
       } catch (e: unknown) {
         this.logger.warn(`Gemini completion error: ${(e as Error).message}. Trying next provider...`);
@@ -63,7 +66,7 @@ export class HttpAiProvider implements AiProvider {
             'Authorization': `Bearer ${groqKey}`,
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
+            model: 'llama3-70b-8192',
             messages: [
               { role: 'system', content: request.systemPrompt },
               ...request.messages,
@@ -83,8 +86,8 @@ export class HttpAiProvider implements AiProvider {
           if (content || (toolCalls && toolCalls.length > 0)) {
             return {
               content,
-              provider: 'Groq (Free Tier Llama 3.3)',
-              model: data?.model || 'llama-3.3-70b-versatile',
+              provider: 'Groq (Free Tier Llama 3)',
+              model: data?.model || 'llama3-70b-8192',
               toolCalls,
               usage: data?.usage ? {
                 promptTokens: data.usage.prompt_tokens || 0,
@@ -93,6 +96,9 @@ export class HttpAiProvider implements AiProvider {
               } : undefined,
             };
           }
+        } else {
+          const err = await res.text();
+          this.logger.warn(`Groq API failed with status ${res.status}: ${err}`);
         }
       } catch (e: unknown) {
         this.logger.warn(`Groq completion error: ${(e as Error).message}. Trying next provider...`);
@@ -111,7 +117,7 @@ export class HttpAiProvider implements AiProvider {
             'X-Title': 'PrintEZ AI Assistant',
           },
           body: JSON.stringify({
-            model: 'meta-llama/llama-3.3-70b-instruct:free',
+            model: 'meta-llama/llama-3.3-70b-instruct',
             messages: [
               { role: 'system', content: request.systemPrompt },
               ...request.messages,
@@ -131,8 +137,8 @@ export class HttpAiProvider implements AiProvider {
           if (content || (toolCalls && toolCalls.length > 0)) {
             return {
               content,
-              provider: 'OpenRouter (Free Community Models)',
-              model: data?.model || 'meta-llama/llama-3.3-70b-instruct:free',
+              provider: 'OpenRouter (Community Models)',
+              model: data?.model || 'meta-llama/llama-3.3-70b-instruct',
               toolCalls,
               usage: data?.usage ? {
                 promptTokens: data.usage.prompt_tokens || 0,
@@ -141,6 +147,9 @@ export class HttpAiProvider implements AiProvider {
               } : undefined,
             };
           }
+        } else {
+          const err = await res.text();
+          this.logger.warn(`OpenRouter API failed with status ${res.status}: ${err}`);
         }
       } catch (e: unknown) {
         this.logger.warn(`OpenRouter completion error: ${(e as Error).message}. Falling back to simulator.`);

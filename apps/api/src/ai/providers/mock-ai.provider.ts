@@ -62,7 +62,7 @@ export class MockAiProvider implements AiProvider {
       }
 
       // 4. Check for grounded products in context
-      if (sys.includes('MATCHED PRODUCT CATALOG ITEMS')) {
+      if (sys.includes('MATCHED PRODUCT CATALOG ITEMS:') && sys.includes('• ')) {
         const productIntro = "I found some great options for you — take a look below!";
         
         if (hasFaq) {
